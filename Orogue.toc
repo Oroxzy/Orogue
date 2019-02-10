@@ -1,0 +1,8 @@
+## Interface: 12000
+## Title: Orogue
+## Author: jeremymeile
+## eMail: jeremymeile@gmail.com
+## DefaultState: enabled
+## OptionalDeps: IsMounted
+IsMounted\IsMounted.xml
+Orogue.xml
