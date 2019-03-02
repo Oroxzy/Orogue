@@ -5,112 +5,114 @@ MB_isChanneling=false
 DRUIDMANA = 0;
 DRUIDMAXMANA = 0;
 
+HASTECHARGES = 0;
+
 local function Print(msg) 
-	if (not DEFAULT_CHAT_FRAME) then
-		return;
-	end
-	DEFAULT_CHAT_FRAME:AddMessage(msg);
+    if (not DEFAULT_CHAT_FRAME) then
+        return;
+    end
+    DEFAULT_CHAT_FRAME:AddMessage(msg);
 end
 
 local function Debug(msg) 
-	if (Fury_Configuration["Debug"]) then
-		if (not DEFAULT_CHAT_FRAME) then
-			return;
-		end
-		DEFAULT_CHAT_FRAME:AddMessage(msg);
-	end
+    if (Fury_Configuration["Debug"]) then
+        if (not DEFAULT_CHAT_FRAME) then
+            return;
+        end
+        DEFAULT_CHAT_FRAME:AddMessage(msg);
+    end
 end
 
 function PrintEffects()
-	local id = 1;
-	if (UnitBuff("target", id)) then
-		Print("Buffs:");
-		while (UnitBuff("target", id)) do
-			Print(UnitBuff("target", id));
-			id = id + 1;
-		end
-		id = 1;
-	end
-	if (UnitDebuff("target", id)) then
-		Print("Debuffs:");
-		while (UnitDebuff("target", id)) do
-			Print(UnitDebuff("target", id));
-			id = id + 1;
-		end
-	end
+    local id = 1;
+    if (UnitBuff("target", id)) then
+        Print("Buffs:");
+        while (UnitBuff("target", id)) do
+            Print(UnitBuff("target", id));
+            id = id + 1;
+        end
+        id = 1;
+    end
+    if (UnitDebuff("target", id)) then
+        Print("Debuffs:");
+        while (UnitDebuff("target", id)) do
+            Print(UnitDebuff("target", id));
+            id = id + 1;
+        end
+    end
 end
 
 function ActiveStance()
-	--Detect the active stance
-	for i = 1, 3 do
-		local _, _, active = GetShapeshiftFormInfo(i);
-		if (active) then
-			return i;
-		end
-	end
-	return nil;
+    --Detect the active stance
+    for i = 1, 3 do
+        local _, _, active = GetShapeshiftFormInfo(i);
+        if (active) then
+            return i;
+        end
+    end
+    return nil;
 end
 
 function Weapon()
-	--Detect if a suitable weapon (not a skinning knife/mining pick and not broken) is present
-	if (GetInventoryItemLink("player", 16)) then
-		local _, _, itemCode = strfind(GetInventoryItemLink("player", 16), "(%d+):");
-		local itemName, itemLink, _, _, itemType = GetItemInfo(itemCode);
-		if (itemLink ~= "item:7005:0:0:0" and itemLink ~= "item:2901:0:0:0" and not GetInventoryItemBroken("player", 16)) then
-			return true;
-		end
-	end
-	return nil;
+    --Detect if a suitable weapon (not a skinning knife/mining pick and not broken) is present
+    if (GetInventoryItemLink("player", 16)) then
+        local _, _, itemCode = strfind(GetInventoryItemLink("player", 16), "(%d+):");
+        local itemName, itemLink, _, _, itemType = GetItemInfo(itemCode);
+        if (itemLink ~= "item:7005:0:0:0" and itemLink ~= "item:2901:0:0:0" and not GetInventoryItemBroken("player", 16)) then
+            return true;
+        end
+    end
+    return nil;
 end
 
 function Shield()
-	--Detect if a shield is present
-	if (GetInventoryItemLink("player", 17)) then
-		local _, _, itemCode = strfind(GetInventoryItemLink("player", 17), "(%d+):")
-		local _, _, _, _, _, itemType = GetItemInfo(itemCode)
-		if (itemType == ITEM_SHIELDS_OROGUE and not GetInventoryItemBroken("player", 17)) then
-			return true;
-		end
-	end
-	return nil;
+    --Detect if a shield is present
+    if (GetInventoryItemLink("player", 17)) then
+        local _, _, itemCode = strfind(GetInventoryItemLink("player", 17), "(%d+):")
+        local _, _, _, _, _, itemType = GetItemInfo(itemCode)
+        if (itemType == ITEM_SHIELDS_OROGUE and not GetInventoryItemBroken("player", 17)) then
+            return true;
+        end
+    end
+    return nil;
 end
 
 function HamstringCost()
-	--Calculate the cost of Hamstring based on gear
-	local i = 0;
-	if (GetInventoryItemLink("player", 10)) then
-		local _, _, itemCode = strfind(GetInventoryItemLink("player", 10), "(%d+):")
-		local itemName = GetItemInfo(itemCode)
-		if (itemName == ITEM_GAUNTLETS1_OROGUE or itemName == ITEM_GAUNTLETS2_OROGUE or itemName == ITEM_GAUNTLETS3_OROGUE or itemName == ITEM_GAUNTLETS4_OROGUE) then
-			i = 3;
-		end
-	end
-	return (10 - i);
+    --Calculate the cost of Hamstring based on gear
+    local i = 0;
+    if (GetInventoryItemLink("player", 10)) then
+        local _, _, itemCode = strfind(GetInventoryItemLink("player", 10), "(%d+):")
+        local itemName = GetItemInfo(itemCode)
+        if (itemName == ITEM_GAUNTLETS1_OROGUE or itemName == ITEM_GAUNTLETS2_OROGUE or itemName == ITEM_GAUNTLETS3_OROGUE or itemName == ITEM_GAUNTLETS4_OROGUE) then
+            i = 3;
+        end
+    end
+    return (10 - i);
 end
 
 function AntiStealthDebuff()
-	--Detect anti-stealth debuffs
-	--Rend, Deep Wounds, Serpent Sting, Immolate, Curse of Agony , Garrote, Rupture, Deadly Poison, Fireball, Ignite, Pyroblast, Corruption, Siphon Life, Faerie Fire, Moonfire, Rake, Rip, Pounce, Insect Swarm, Holy Fire, Wyvern Sting, Devouring Plague
-	if (HasDebuff("target", "Ability_Gouge") or HasDebuff("target", "Ability_Backstab") or HasDebuff("target", "Ability_Hunter_Quickshot") or HasDebuff("target", "Spell_Fire_Immolation") or HasDebuff("target", "Spell_Shadow_CurseOfSargeras") or HasDebuff("target", "Ability_Rogue_Garrote") or HasDebuff("target", "Ability_Rogue_Rupture") or HasDebuff("target", "Ability_Rogue_DualWeild") or HasDebuff("target", "Spell_Shadow_ShadowWordPain") or HasDebuff("target", "Spell_Fire_FlmaeBolt") or HasDebuff("target", "Spell_Fire_Incinerate") or HasDebuff("target", "Spell_Fire_Fireball02") or HasDebuff("target", "Spell_Shadow_AbominationExplosion") or HasDebuff("target", "Spell_Shadow_Requiem") or HasDebuff("target", "Spell_Nature_FaerieFire") or HasDebuff("target", "Spell_Nature_StarFall") or HasDebuff("target", "Ability_Druid_Disembowel") or HasDebuff("target", "Ability_GhoulFrenzy") or HasDebuff("target", "Ability_Druid_SurpriseAttack") or HasDebuff("target", "Spell_Nature_InsectSwarm") or HasDebuff("target", "Spell_Holy_SearingLight") or HasDebuff("target", "INV_Spear_02") or HasDebuff("target", "Spell_Shadow_BlackPlague")) then
-		return true;
-	end
-	return nil;
+    --Detect anti-stealth debuffs
+    --Rend, Deep Wounds, Serpent Sting, Immolate, Curse of Agony , Garrote, Rupture, Deadly Poison, Fireball, Ignite, Pyroblast, Corruption, Siphon Life, Faerie Fire, Moonfire, Rake, Rip, Pounce, Insect Swarm, Holy Fire, Wyvern Sting, Devouring Plague
+    if (HasDebuff("target", "Ability_Gouge") or HasDebuff("target", "Ability_Backstab") or HasDebuff("target", "Ability_Hunter_Quickshot") or HasDebuff("target", "Spell_Fire_Immolation") or HasDebuff("target", "Spell_Shadow_CurseOfSargeras") or HasDebuff("target", "Ability_Rogue_Garrote") or HasDebuff("target", "Ability_Rogue_Rupture") or HasDebuff("target", "Ability_Rogue_DualWeild") or HasDebuff("target", "Spell_Shadow_ShadowWordPain") or HasDebuff("target", "Spell_Fire_FlmaeBolt") or HasDebuff("target", "Spell_Fire_Incinerate") or HasDebuff("target", "Spell_Fire_Fireball02") or HasDebuff("target", "Spell_Shadow_AbominationExplosion") or HasDebuff("target", "Spell_Shadow_Requiem") or HasDebuff("target", "Spell_Nature_FaerieFire") or HasDebuff("target", "Spell_Nature_StarFall") or HasDebuff("target", "Ability_Druid_Disembowel") or HasDebuff("target", "Ability_GhoulFrenzy") or HasDebuff("target", "Ability_Druid_SurpriseAttack") or HasDebuff("target", "Spell_Nature_InsectSwarm") or HasDebuff("target", "Spell_Holy_SearingLight") or HasDebuff("target", "INV_Spear_02") or HasDebuff("target", "Spell_Shadow_BlackPlague")) then
+        return true;
+    end
+    return nil;
 end
 
 function SnareDebuff()
-	--Detect snaring debuffs
-	--Hamstring, Wing Clip, Curse of Exhaustion, Crippling Poison, Frostbolt, Cone of Cold, Frost Shock
-	if (HasDebuff("target", "Ability_ShockWave") or HasDebuff("target", "Ability_Rogue_Trip") or HasDebuff("target", "Spell_Shadow_GrimWard") or HasDebuff("target", "Ability_PoisonSting") or HasDebuff("target", "Spell_Frost_FrostBolt02") or HasDebuff("target", "Spell_Frost_Glacier") or HasDebuff("target", "Spell_Frost_FrostShock")) then
-		return true;
-	end
-	return nil;
+    --Detect snaring debuffs
+    --Hamstring, Wing Clip, Curse of Exhaustion, Crippling Poison, Frostbolt, Cone of Cold, Frost Shock
+    if (HasDebuff("target", "Ability_ShockWave") or HasDebuff("target", "Ability_Rogue_Trip") or HasDebuff("target", "Spell_Shadow_GrimWard") or HasDebuff("target", "Ability_PoisonSting") or HasDebuff("target", "Spell_Frost_FrostBolt02") or HasDebuff("target", "Spell_Frost_Glacier") or HasDebuff("target", "Spell_Frost_FrostShock")) then
+        return true;
+    end
+    return nil;
 end
 
 function Orogue_RunnerDetect(arg1, arg2)
-	--Thanks to HateMe
-	if (arg1 == CHAT_RUNNER_OROGUE) then
-		Orogue_Runners[arg2] = true;
-	end
+    --Thanks to HateMe
+    if (arg1 == CHAT_RUNNER_OROGUE) then
+        Orogue_Runners[arg2] = true;
+    end
 end
 
 -- Add /startattack Command.
@@ -150,43 +152,43 @@ SlashCmdList.STOPATTACK = stopattack
 
 -- return true if one of the cc-abilities is on your target.
 function rogue_target_has_cc()
-	if buffed("Gouge","target") or buffed("Blind","target") or buffed("Sap","target") then
-		return true
-	end
+    if buffed("Gouge","target") or buffed("Blind","target") or buffed("Sap","target") then
+        return true
+    end
 end
 
 -- return true if one of the stun-abilities is on your target.
 function rogue_target_has_stun()
-	if buffed("Kidney Shot","target") or buffed("Cheap Shot","target") then
-		return true
-	end
+    if buffed("Kidney Shot","target") or buffed("Cheap Shot","target") then
+        return true
+    end
 end
 
 -- gouge and sap immun.
 function target_incapacitate_immune()
-	if buffed("Berserker Rage","target") or buffed("Divine Shield","target") or buffed("Blessing of Protection","target") or buffed("Blessing of Protection","target") then
-		return true
-	end
+    if buffed("Berserker Rage","target") or buffed("Divine Shield","target") or buffed("Blessing of Protection","target") or buffed("Blessing of Protection","target") then
+        return true
+    end
 end
 
 function target_all_immune()
-	if buffed("Divine Shield","target") or buffed("Blessing of Protection","target") or buffed("Blessing of Protection","target") then
-		return true
-	end
+    if buffed("Divine Shield","target") or buffed("Blessing of Protection","target") or buffed("Blessing of Protection","target") then
+        return true
+    end
 end
 
 function no_cc_ready()
-	if OnCooldown("Kidney Shot") and OnCooldown("Gouge") and OnCooldown("Kidney Shot") then
-		return true
-	end
+    if OnCooldown("Kidney Shot") and OnCooldown("Gouge") and OnCooldown("Kidney Shot") then
+        return true
+    end
 end
 
 function ManaDown()
-	if ManaUser() then 
-	 return UnitManaMax("player")-UnitMana("player")
-	else
-	 return 0
-	end
+    if ManaUser() then 
+     return UnitManaMax("player")-UnitMana("player")
+    else
+     return 0
+    end
 end
 
 function InstantPoisonMain()
@@ -229,9 +231,9 @@ end
 
 function SelfBuff(spell)
 --Important spell which allows a player to buff themselves without recasting. Only buffs if you don't have buff
-	if not buffed(spell,"player") then
-		CastSpellByName(spell,1)
-	end
+    if not buffed(spell,"player") then
+        CastSpellByName(spell,1)
+    end
 end
 
 function MyRage()
@@ -261,7 +263,7 @@ function ImBusy()
 end
 
 function PVP()
-	return (UnitIsPlayer("target") and UnitIsEnemy("target","player"))
+    return (UnitIsPlayer("target") and UnitIsEnemy("target","player"))
 end
 
 function InCombat()
@@ -290,7 +292,7 @@ function CooldownTime(spell)
   local start,duration,enable = GetSpellCooldown(SpellNum(spell),BOOKTYPE_SPELL)
   if duration==0 then cdtime=0
   else
-	cdtime=time-start
+    cdtime=time-start
   end
   return cdtime
 end
@@ -300,36 +302,43 @@ function OnCooldown(spell)
   if not SpellExists(spell) then return true end
   local start,duration,enable = GetSpellCooldown(SpellNum(spell),BOOKTYPE_SPELL)
   if duration==0 then 
-	return
+    return
   else 
-	return duration
+    return duration
   end
 end
 
+local function setTimer(duration)
+    local endTime = GetTime() + duration;
+    if (endTime < GetTime()) then
+        return true
+    end
+end
+
 local function ItemOnCooldownTime(item)
-	local time=GetTime()
-	local cdtime
-	local start,duration,enable = GetItemCooldown(item);
-	if not duration then return -1 end
-	if duration==0 then cdtime=0
-	else
-		cdtime=time-start
-	end
-	return cdtime
+    local time=GetTime()
+    local cdtime
+    local start,duration,enable = GetItemCooldown(item);
+    if not duration then return -1 end
+    if duration==0 then cdtime=0
+    else
+        cdtime=time-start
+    end
+    return cdtime
 end
 
 local function ItemCooldown(item)
-	local start,duration = GetItemCooldown(item)
-	if not duration then return -1 end
-		if start==0 then
-			return 0
-		else
-			return duration-(GetTime()-start)
-		end
+    local start,duration = GetItemCooldown(item)
+    if not duration then return -1 end
+        if start==0 then
+            return 0
+        else
+            return duration-(GetTime()-start)
+        end
 end
 
 function SpellExists(findspell)
-	for i = 1, MAX_SKILLLINE_TABS do
+    for i = 1, MAX_SKILLLINE_TABS do
    local name, texture, offset, numSpells = GetSpellTabInfo(i);
    
    if not name then
@@ -337,7 +346,7 @@ function SpellExists(findspell)
    end
    
    for s = offset + 1, offset + numSpells do
-      local	spell, rank = GetSpellName(s, BOOKTYPE_SPELL);
+      local spell, rank = GetSpellName(s, BOOKTYPE_SPELL);
       
       if rank then
           local spell = spell.." "..rank;
@@ -350,406 +359,451 @@ end
 end
 
 function GetArmor()
-	local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor("target")
-	return effectiveArmor
+    local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor("target")
+    return effectiveArmor
 end
 
 function Orogue_Vanish()
-	if InCombat() then
-		if not buffed("Stealth","player") then cast("Vanish") end
-	else
-		if not buffed("Stealth","player") then
-			cast("Stealth")
-		end
-	end
+    if InCombat() then
+        if not buffed("Stealth","player") then cast("Vanish") end
+    else
+        if not buffed("Stealth","player") then
+            cast("Stealth")
+        end
+    end
 end
 
+function TheEndofDreamsEquipped()
+  return string.find(GetInventoryItemLink("player",16), "The End of Dreams")
+end
+
+function TomeofKnowledgeEquipped()
+  return string.find(GetInventoryItemLink("player",17), "Tome of Knowledge")
+end
+
+function ManualCrowdPummelerEquipped()
+  return string.find(GetInventoryItemLink("player",16), "Manual Crowd Pummeler")
+end
+
+PummelerCharges = 0
+
 function Orogue_Combat_Feral()
-	if not UnitClass("player") == CLASS_DRUID then return end
-	-- Do nothing if channeling or casting.
-	if ImBusy() then return end
+    if not UnitClass("player") == CLASS_DRUID then return end
+    -- Do nothing if channeling or casting.
+    if ImBusy() then return end
 
-	-- Go Prowl if not in combat.
-		if not buffed("Omen of Clarity","player") and UFIDRUIDMANA > 598 then
-			if buffed("Cat Form","player") then cast("Cat Form") end
-			cast("Omen of Clarity")
-			return
-		end
+    -- Go Prowl if not in combat.
+        if not buffed("Omen of Clarity","player") and UFIDRUIDMANA > 598 then
+            if buffed("Cat Form","player") then cast("Cat Form") end
+            cast("Omen of Clarity")
+            return
+        end
 
-		if not InCombat() then
-			if not buffed("Prowl","player") then cast("Prowl") end
-			if buffed("Prowl","player") then cast("Ravage") end
-		end
+        if not InCombat() then
+            if not buffed("Prowl","player") then cast("Prowl") end
+            if buffed("Prowl","player") then cast("Ravage") end
+        end
 
-	-- If Mana points are not known unshift and save current Mana points.
-	if UFIDRUIDMANA == 0 and buffed("Cat Form","player") then cast("Cat Form") end
-	--if DRUIDMAXMANA == 0 and buffed("Cat Form","player") then cast("Cat Form") end
+    -- If Mana points are not known unshift and save current Mana points.
+    if UFIDRUIDMANA == 0 and buffed("Cat Form","player") then cast("Cat Form") end
 
-	-- Store Mana Points cause in Cat we can not know how much Mana we have.
-	if not buffed("Cat Form","player") then
-		if InCombat() then
-			if (UnitManaMax("player") - UnitMana("player"))>1500 then
-				if ItemCooldown("Dark Rune") > 1 and ItemCooldown("Major Mana Potion") > 1 and not OnCooldown("Innervate") then
-					cast("Innervate")
-					return
-				else
-					if (UnitManaMax("player") - UnitMana("player"))>1500 and ItemCooldown("Dark Rune") < 1 then
-						use("Dark Rune")
-						return
-					end
-					if (UnitManaMax("player") - UnitMana("player"))>2250 and ItemCooldown("Major Mana Potion") < 1 then
-						use("Major Mana Potion")
-						return
-					end
-				end
-			end
+    -- Store Mana Points cause in Cat we can not know how much Mana we have.
+    if not buffed("Cat Form","player") then
+        if InCombat() then
+            if (UnitManaMax("player") - UnitMana("player"))>2000 and ItemCooldown("Dark Rune") > 10 and ItemCooldown("Major Mana Potion") > 10 and not OnCooldown("Innervate") then
+                cast("Innervate")
+                return
+            else
+                if (UnitManaMax("player") - UnitMana("player"))>1500 and ItemCooldown("Dark Rune") == 0 then
+                    use("Dark Rune")
+                    return
+                end
+                if (UnitManaMax("player") - UnitMana("player"))>2250 and ItemCooldown("Major Mana Potion") == 0 then
+                    use("Major Mana Potion")
+                    return
+                end
+            end
+            if ItemOnCooldownTime("Juju Flurry") == 0 then
+                use("Juju Flurry")
+                return
+            end
+        end
+    end
 
-			if ItemCooldown("Juju Flurry") <= 0 then
-				use("Juju Flurry")
-				return
-			end
-		end
-		--DRUIDMANA = UnitMana("player") - 478
-		--DRUIDMAXMANA = UnitManaMax("player")
-		--Print(UFIDRUIDMANA)
-		--Print(DRUIDMAXMANA)
-	end
+    -- Alway go back to Cat.
+    SelfBuff("Cat Form")
 
-	-- Alway go back to Cat.
-	SelfBuff("Cat Form")
+    -- Do nothing if not in combat.
+    if not InCombat() then return end
 
-	-- Do nothing if not in combat.
-	if not InCombat() then return end
+        startattack()
 
-	-- Powershift.
-	if MyEnergy()<13 and buffed("Cat Form","player") and SHAPESHIFT_GO then
-		if UFIDRUIDMANA > 478 or (UFIDRUIDMANA < 478 and ItemCooldown("Major Mana Potion") < 1 or ItemCooldown("Dark Rune") < 1) then
-			cast("Cat Form")
-		end
-	end
+    -- Powershift.
+    if MyEnergy()<28 and buffed("Cat Form","player") and SHAPESHIFT_GO then
+        if UFIDRUIDMANA < 478 and ItemCooldown("Major Mana Potion") == 0 or ItemCooldown("Dark Rune") == 0 then
+            cast("Cat Form")
+        end
+    end
+    if not buffed("Haste","player") and MyEnergy()<12 and buffed("Cat Form","player") and SHAPESHIFT_GO then
+        if UFIDRUIDMANA > 478 then
+            cast("Cat Form")
+        end
+    end
+    if buffed("Haste","player") and MyEnergy()<20 and buffed("Cat Form","player") and SHAPESHIFT_GO then
+        if UFIDRUIDMANA > 478 then
+            cast("Cat Form")
+        end
+    end
+    if (buffed("Slayer's Crest","player") or buffed("Kiss of the Spider","player")) and buffed("Haste","player") and MyEnergy()<28 and buffed("Cat Form","player") and SHAPESHIFT_GO then
+        if UFIDRUIDMANA > 478 then
+            cast("Cat Form")
+        end
+    end
 
-	-- DPS.
-	startattack()
-	if buffed("Cat Form","player") then
-		use("Slayer's Crest")
-		--use("Kiss of the Spider")
-		if GetComboPoints()>=4 then
-			cast("Ferocious Bite")
-		end
-		if GetComboPoints()<4 then
-			cast("Shred")
-		end
-	end
+    -- DPS.
+    if buffed("Cat Form","player") then
+        if not buffed("Haste","player") then
+            --use("Might of the Shapeshifter")
+            if ItemCooldown("Manual Crowd Pummeler") > 0 then
+                HASTECHARGES = 0
+            end
+            if not ManualCrowdPummelerEquipped then
+                use("Manual Crowd Pummeler")
+            end
+            if ManualCrowdPummelerEquipped and (HASTECHARGES == 3 and ItemCooldown("Manual Crowd Pummeler") == 0) then
+                PickupInventoryItem(16) DeleteCursorItem()
+            end
+            if ManualCrowdPummelerEquipped and ItemCooldown("Manual Crowd Pummeler") == 0 then
+                use("Manual Crowd Pummeler")
+                HASTECHARGES = HASTECHARGES + 1
+            end
+        end
+
+        if not buffed("Slayer's Crest","player") then
+            use("Slayer's Crest")
+        end
+        if not buffed("Kiss of the Spider","player") then
+            use("Kiss of the Spider")
+        end
+        --if not buffed("Haste","player") and ItemOnCooldownTime("Badge of the Swarmguard") > 40 and ManualCrowdPummelerEquipped() then use("The End of Dreams") end
+        --if not buffed("Haste","player") and ItemOnCooldownTime("Badge of the Swarmguard") > 40 and ManualCrowdPummelerEquipped() then use("Tome of Knowledge") end
+        if GetComboPoints()>=4 then
+            cast("Ferocious Bite")
+        end
+        if GetComboPoints()<4 then
+            cast("Shred")
+        end
+    end
 
 end
 
 function Orogue_Eviscerate()
-	-- Do nothing if channeling or casting.
-	if ImBusy() then return end
+    -- Do nothing if channeling or casting.
+    if ImBusy() then return end
 
-	-- Apply Poison.
-	if buffed("Stealth","player") then
-		--DeadlyPoisonMain()
-		InstantPoisonOff()
-	end
+    -- Apply Poison.
+    if buffed("Stealth","player") then
+        --DeadlyPoisonMain()
+        InstantPoisonOff()
+    end
 
-	-- Restealth for blind. TargetInCombat
-	if target_hasBlind and OnCooldown("Blind") and not buffed("Stealth","player") then
-		cast("Stealth")
-		ClearTarget()
-		return
-	end
-	if buffed("Blind","target") and not target_hasBlind then target_hasBlind = true end
+    -- Restealth for blind. TargetInCombat
+    if target_hasBlind and OnCooldown("Blind") and not buffed("Stealth","player") then
+        cast("Stealth")
+        ClearTarget()
+        return
+    end
+    if buffed("Blind","target") and not target_hasBlind then target_hasBlind = true end
 
-	-- Go Stealth if not in combat.
-	if not InCombat() and not buffed("Stealth","player") then
-		cast("Stealth")
-	end
+    -- Go Stealth if not in combat.
+    if not InCombat() and not buffed("Stealth","player") then
+        cast("Stealth")
+    end
 
-	if buffed("Stealth","player") and not target_hasBlind then cast("Sinister Strike") end
+    if buffed("Stealth","player") and not target_hasBlind then cast("Sinister Strike") end
 
-	-- Do nothing if not in combat.
-	if not InCombat() then return end
+    -- Do nothing if not in combat.
+    if not InCombat() then return end
 
-	if not buffed("Stealth","player") and InCombat() and not rogue_target_has_cc() then
-		startattack()
-		if buffed("Slice and Dice","player") then
-			if buffed("Blade Flurry","player") then
-				if not OnCooldown("Adrenaline Rush") then cast("Adrenaline Rush") end
-			end
-			if not OnCooldown("Blade Flurry") then cast("Blade Flurry") end
-			use("Slayer's Crest")
-			use("Kiss of the Spider")
-			use("Juju Flurry")
-			cast("Blood Fury")
-			cast("Cold Blood")
-		end
-		if MyEnergy()<=10 and buffed("Blade Flurry","player") then
-			use("Thistle Tea")
-		end
-		if GetComboPoints()>=4 and MyEnergy()>=35 then
-			if buffed("Slice and Dice","player") then
-				cast("Eviscerate")
-			else
-				cast("Slice and Dice")
-			end
-		end
-		if not buffed("Slice and Dice","player") then
-			cast("Slice and Dice")
-		end
-		if MyEnergy()>=55 and GetComboPoints()<5 then cast("Sinister Strike") end
-	end
+    if not buffed("Stealth","player") and InCombat() and not rogue_target_has_cc() then
+        startattack()
+        if buffed("Slice and Dice","player") then
+            if buffed("Blade Flurry","player") then
+                if not OnCooldown("Adrenaline Rush") then cast("Adrenaline Rush") end
+            end
+            if not OnCooldown("Blade Flurry") then cast("Blade Flurry") end
+            use("Slayer's Crest")
+            use("Kiss of the Spider")
+            use("Juju Flurry")
+            cast("Blood Fury")
+            cast("Cold Blood")
+        end
+        if MyEnergy()<=10 and buffed("Blade Flurry","player") then
+            use("Thistle Tea")
+        end
+        if GetComboPoints()>=4 and MyEnergy()>=35 then
+            if buffed("Slice and Dice","player") then
+                cast("Eviscerate")
+            else
+                cast("Slice and Dice")
+            end
+        end
+        if not buffed("Slice and Dice","player") then
+            cast("Slice and Dice")
+        end
+        if MyEnergy()>=55 and GetComboPoints()<5 then cast("Sinister Strike") end
+    end
 end
 
 function Orogue_Backstab()
-	-- Do nothing if channeling or casting.
-	if ImBusy() then return end
+    -- Do nothing if channeling or casting.
+    if ImBusy() then return end
 
-	-- Apply Poison.
-	if buffed("Stealth","player") then
-		--DeadlyPoisonMain()
-		InstantPoisonOff()
-	end
+    -- Apply Poison.
+    if buffed("Stealth","player") then
+        --DeadlyPoisonMain()
+        InstantPoisonOff()
+    end
 
-	-- Restealth for blind. TargetInCombat
-	if target_hasBlind and OnCooldown("Blind") and not buffed("Stealth","player") then
-		cast("Stealth")
-		ClearTarget()
-		return
-	end
-	if buffed("Blind","target") and not target_hasBlind then target_hasBlind = true end
+    -- Restealth for blind. TargetInCombat
+    if target_hasBlind and OnCooldown("Blind") and not buffed("Stealth","player") then
+        cast("Stealth")
+        ClearTarget()
+        return
+    end
+    if buffed("Blind","target") and not target_hasBlind then target_hasBlind = true end
 
-	-- Go Stealth if not in combat.
-	if not InCombat() and not buffed("Stealth","player") then
-		cast("Stealth")
-	end
+    -- Go Stealth if not in combat.
+    if not InCombat() and not buffed("Stealth","player") then
+        cast("Stealth")
+    end
 
-	if buffed("Stealth","player") and not target_hasBlind then cast("Ambush") end
+    if buffed("Stealth","player") and not target_hasBlind then cast("Ambush") end
 
-	if not buffed("Stealth","player") and buffed("Slice and Dice","player") and MyEnergy()>=60 then
-		cast("Cold Blood")
-		cast("Vanish")
-	end
-	-- Do nothing if not in combat.
-	if not InCombat() then return end
+    if not buffed("Stealth","player") and buffed("Slice and Dice","player") and MyEnergy()>=60 then
+        cast("Cold Blood")
+        cast("Vanish")
+    end
+    -- Do nothing if not in combat.
+    if not InCombat() then return end
 
-	if not buffed("Stealth","player") and InCombat() and not rogue_target_has_cc() then
-		startattack()
-		if buffed("Slice and Dice","player") then
-			if buffed("Blade Flurry","player") then
-				if not OnCooldown("Adrenaline Rush") then cast("Adrenaline Rush") end
-			end
-			if not OnCooldown("Blade Flurry") then cast("Blade Flurry") end
-			use("Slayer's Crest")
-			use("Kiss of the Spider")
-			use("Juju Flurry")
-			cast("Blood Fury")
-		end
-		if MyEnergy()<=10 and buffed("Blade Flurry","player") then
-			use("Thistle Tea")
-		end
-		if GetComboPoints()>=4 and buffed("Slice and Dice","player") and MyEnergy()>80 then
-			cast("Eviscerate")
-			if OnCooldown("Feint") then
-				cast("Slice and Dice")
-			end
-		end
-		if GetComboPoints()<=4 and buffed("Slice and Dice","player") then
-			if MyEnergy()>=75 then cast("Backstab") end
-		end
-		if not buffed("Slice and Dice","player") then
-			cast("Slice and Dice")
-		end
-		if GetComboPoints()==0 and not buffed("Slice and Dice","player") then 
-			cast("Backstab")
-		end
-	end
+    if not buffed("Stealth","player") and InCombat() and not rogue_target_has_cc() then
+        startattack()
+        if buffed("Slice and Dice","player") then
+            if buffed("Blade Flurry","player") then
+                if not OnCooldown("Adrenaline Rush") then cast("Adrenaline Rush") end
+            end
+            if not OnCooldown("Blade Flurry") then cast("Blade Flurry") end
+            use("Slayer's Crest")
+            use("Kiss of the Spider")
+            use("Juju Flurry")
+            cast("Blood Fury")
+        end
+        if MyEnergy()<=10 and buffed("Blade Flurry","player") then
+            use("Thistle Tea")
+        end
+        if GetComboPoints()>=4 and buffed("Slice and Dice","player") and MyEnergy()>80 then
+            cast("Eviscerate")
+            if OnCooldown("Feint") then
+                cast("Slice and Dice")
+            end
+        end
+        if GetComboPoints()<=4 and buffed("Slice and Dice","player") then
+            if MyEnergy()>=75 then cast("Backstab") end
+        end
+        if not buffed("Slice and Dice","player") then
+            cast("Slice and Dice")
+        end
+        if GetComboPoints()==0 and not buffed("Slice and Dice","player") then 
+            cast("Backstab")
+        end
+    end
 end
 
 function Orogue_Stunlock()
-	if not UnitClass("player") == CLASS_ROGUE then return end
+    if not UnitClass("player") == CLASS_ROGUE then return end
 
-	--Eviscerate Calculation START-----------------------------------------------------------------------------
+    --Eviscerate Calculation START-----------------------------------------------------------------------------
 
-		-- Get AttackPower.
-		local base, posBuff, negBuff = UnitAttackPower("player")
-		local Effective = base + posBuff + negBuff
+        -- Get AttackPower.
+        local base, posBuff, negBuff = UnitAttackPower("player")
+        local Effective = base + posBuff + negBuff
 
-		-- Calculate Eviscerate Rank 9 damage.
-		local Modifier = Effective * (GetComboPoints() * 0.03)
-		local EviscerateDamage = 0
-		local EviscerateDamageCrit = 0
-		if GetComboPoints()==1 then
-			EviscerateDamage = ((224 + 332) / 2)
-		elseif GetComboPoints()==2 then
-			EviscerateDamage = ((394 + 502) / 2)
-		elseif GetComboPoints()==3 then
-			EviscerateDamage = ((564 + 672) / 2)
-		elseif GetComboPoints()==4 then
-			EviscerateDamage = ((734 + 842) / 2)
-		elseif GetComboPoints()==5 then
-			EviscerateDamage = ((904 + 1012) / 2)
-		end
+        -- Calculate Eviscerate Rank 9 damage.
+        local Modifier = Effective * (GetComboPoints() * 0.03)
+        local EviscerateDamage = 0
+        local EviscerateDamageCrit = 0
+        if GetComboPoints()==1 then
+            EviscerateDamage = ((224 + 332) / 2)
+        elseif GetComboPoints()==2 then
+            EviscerateDamage = ((394 + 502) / 2)
+        elseif GetComboPoints()==3 then
+            EviscerateDamage = ((564 + 672) / 2)
+        elseif GetComboPoints()==4 then
+            EviscerateDamage = ((734 + 842) / 2)
+        elseif GetComboPoints()==5 then
+            EviscerateDamage = ((904 + 1012) / 2)
+        end
 
-		-- Calculate the increased damage of Eviscerate based on talents.
-		-- Talent Improved Eviscerate.
-		local _, _, _, _, currRank = GetTalentInfo(1, 1)
-		local Imp_EviscerateDamageFactor = 0.05 * tonumber(currRank)
-		-- Talent Aggression
-		local _, _, _, _, currRank = GetTalentInfo(2, 18)
-		local AggressionDamageFactor = 0.02 * tonumber(currRank)
-	
-		local EviscerateDamageFactor = (Imp_EviscerateDamageFactor + AggressionDamageFactor + 1.0)
+        -- Calculate the increased damage of Eviscerate based on talents.
+        -- Talent Improved Eviscerate.
+        local _, _, _, _, currRank = GetTalentInfo(1, 1)
+        local Imp_EviscerateDamageFactor = 0.05 * tonumber(currRank)
+        -- Talent Aggression
+        local _, _, _, _, currRank = GetTalentInfo(2, 18)
+        local AggressionDamageFactor = 0.02 * tonumber(currRank)
+    
+        local EviscerateDamageFactor = (Imp_EviscerateDamageFactor + AggressionDamageFactor + 1.0)
 
-		EviscerateDamage = (EviscerateDamage + Modifier)
-		EviscerateDamage = (EviscerateDamage * EviscerateDamageFactor)
-		EviscerateDamageCrit = (EviscerateDamage * 2)
+        EviscerateDamage = (EviscerateDamage + Modifier)
+        EviscerateDamage = (EviscerateDamage * EviscerateDamageFactor)
+        EviscerateDamageCrit = (EviscerateDamage * 2)
 
-		-- Calculate Armor/damage reduction from target.
-		-- Source: http://classic-wow.wikia.com/wiki/Armor
-		--local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor("target")
-		local playerLevel = UnitLevel("player")
-		if GetArmor() then
-			local damageReduction = GetArmor()/((85 * playerLevel) + 400)
-			damageReduction = 100 * (damageReduction/(damageReduction + 1))
-			EviscerateDamage = EviscerateDamage - ((EviscerateDamage / 100) * damageReduction)
-			EviscerateDamageCrit = EviscerateDamageCrit - ((EviscerateDamageCrit / 100) * damageReduction)
-		end
+        -- Calculate Armor/damage reduction from target.
+        -- Source: http://classic-wow.wikia.com/wiki/Armor
+        --local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor("target")
+        local playerLevel = UnitLevel("player")
+        if GetArmor() then
+            local damageReduction = GetArmor()/((85 * playerLevel) + 400)
+            damageReduction = 100 * (damageReduction/(damageReduction + 1))
+            EviscerateDamage = EviscerateDamage - ((EviscerateDamage / 100) * damageReduction)
+            EviscerateDamageCrit = EviscerateDamageCrit - ((EviscerateDamageCrit / 100) * damageReduction)
+        end
 
-	--Eviscerate Calculation END-----------------------------------------------------------------------------
+    --Eviscerate Calculation END-----------------------------------------------------------------------------
 
-	--Expose Armor Calculation START-----------------------------------------------------------------------------
+    --Expose Armor Calculation START-----------------------------------------------------------------------------
 
-		-- Expose Armor Rank 5 armor reduction.
-		local ExposeArmorReduction = 0
-		if GetComboPoints()==1 then
-			ExposeArmorReduction = (340)
-		elseif GetComboPoints()==2 then
-			ExposeArmorReduction = (680)
-		elseif GetComboPoints()==3 then
-			ExposeArmorReduction = (1020)
-		elseif GetComboPoints()==4 then
-			ExposeArmorReduction = (1360)
-		elseif GetComboPoints()==5 then
-			ExposeArmorReduction = (1700)
-		end
-		
-		-- Talent Expose Armor.
-		local _, _, _, _, currRank = GetTalentInfo(1, 8)
-		local ExposeArmorReductionFactor = 0.25 * tonumber(currRank)
-		ExposeArmorReductionFactor = ExposeArmorReductionFactor + 1.0
-		ExposeArmorReduction = (ExposeArmorReduction * ExposeArmorReductionFactor)
+        -- Expose Armor Rank 5 armor reduction.
+        local ExposeArmorReduction = 0
+        if GetComboPoints()==1 then
+            ExposeArmorReduction = (340)
+        elseif GetComboPoints()==2 then
+            ExposeArmorReduction = (680)
+        elseif GetComboPoints()==3 then
+            ExposeArmorReduction = (1020)
+        elseif GetComboPoints()==4 then
+            ExposeArmorReduction = (1360)
+        elseif GetComboPoints()==5 then
+            ExposeArmorReduction = (1700)
+        end
+        
+        -- Talent Expose Armor.
+        local _, _, _, _, currRank = GetTalentInfo(1, 8)
+        local ExposeArmorReductionFactor = 0.25 * tonumber(currRank)
+        ExposeArmorReductionFactor = ExposeArmorReductionFactor + 1.0
+        ExposeArmorReduction = (ExposeArmorReduction * ExposeArmorReductionFactor)
 
-	--Expose Armor Calculation END-----------------------------------------------------------------------------
+    --Expose Armor Calculation END-----------------------------------------------------------------------------
 
-	-- Use Eviscerate if target health lower than possible Eviscerate dmg.
-	--if UnitHealth("target")<EviscerateDamage and MyEnergy()>=35 then
-	--	PlaySoundFile("Sound\\Interface\\PlayerInviteA.wav")
-	--	cast("Eviscerate")
-	--	print(EviscerateDamage)
-	--	print(UnitHealth("player"))
+    -- Use Eviscerate if target health lower than possible Eviscerate dmg.
+    --if UnitHealth("target")<EviscerateDamage and MyEnergy()>=35 then
+    --  PlaySoundFile("Sound\\Interface\\PlayerInviteA.wav")
+    --  cast("Eviscerate")
+    --  print(EviscerateDamage)
+    --  print(UnitHealth("player"))
 
-	--end
+    --end
 
-	-- Do nothing if channeling or casting.
-	if ImBusy() then return end
+    -- Do nothing if channeling or casting.
+    if ImBusy() then return end
 
-	-- Apply Poison.
-	if buffed("Stealth","player") then
-		DeadlyPoisonMain()
-		DeadlyPoisonOff()
-	end
+    -- Apply Poison.
+    if buffed("Stealth","player") then
+        DeadlyPoisonMain()
+        DeadlyPoisonOff()
+    end
 
-	-- Restealth for blind. TargetInCombat
-	if target_hasBlind and OnCooldown("Blind") and not buffed("Stealth","player") then
-		cast("Stealth")
-		ClearTarget()
-		return
-	end
-	if buffed("Blind","target") and not target_hasBlind then target_hasBlind = true end
+    -- Restealth for blind. TargetInCombat
+    if target_hasBlind and OnCooldown("Blind") and not buffed("Stealth","player") then
+        cast("Stealth")
+        ClearTarget()
+        return
+    end
+    if buffed("Blind","target") and not target_hasBlind then target_hasBlind = true end
 
-	-- Go Stealth if not in combat.
-	if not InCombat() and not buffed("Stealth","player") then
-		cast("Stealth")
-	end
+    -- Go Stealth if not in combat.
+    if not InCombat() and not buffed("Stealth","player") then
+        cast("Stealth")
+    end
 
 
-	--if GetArmor()>=0 and MyEnergy()>=25 and not buffed("Expose Armor","target") and GetComboPoints()>=3 then
-	--	if buffed("Gouge","target") then
-	--		cast("Expose Armor")
-	--		stopattack()
-	--	end
-	--end
+    --if GetArmor()>=0 and MyEnergy()>=25 and not buffed("Expose Armor","target") and GetComboPoints()>=3 then
+    --  if buffed("Gouge","target") then
+    --      cast("Expose Armor")
+    --      stopattack()
+    --  end
+    --end
 
-	-- Do nothing if in stealth if not full Energy.
-	if not InCombat() and buffed("Stealth","player") and MyEnergy()<60 and not IsAlive("target") and UnitIsCivilian("target") and (target_all_immune() or rogue_target_has_cc or rogue_target_has_stun) then return end
+    -- Do nothing if in stealth if not full Energy.
+    if not InCombat() and buffed("Stealth","player") and MyEnergy()<60 and not IsAlive("target") and UnitIsCivilian("target") and (target_all_immune() or rogue_target_has_cc or rogue_target_has_stun) then return end
 
-	-- Cheap Shot if full Energy.
-	if buffed("Stealth","player") and not target_hasBlind then cast("Cheap Shot") end
+    -- Cheap Shot if full Energy.
+    if buffed("Stealth","player") and not target_hasBlind then cast("Cheap Shot") end
 
-	-- Do nothing if not in combat.
-	if not InCombat() then return end
+    -- Do nothing if not in combat.
+    if not InCombat() then return end
 
-	-- instant cast Sinister Strike after Cheap Shot to have no gcd for Gouge.
-	if buffed("Cheap Shot","target") and MyEnergy()>=40 and GetComboPoints()==2 then cast("Sinister Strike") end
+    -- instant cast Sinister Strike after Cheap Shot to have no gcd for Gouge.
+    if buffed("Cheap Shot","target") and MyEnergy()>=40 and GetComboPoints()==2 then cast("Sinister Strike") end
 
-	-- Interrupt targets cast if no other CC ready.
-	if (SpellInterrupt) then
-		if ((GetTime() - SpellInterrupt) > 2) then
-			SpellInterrupt = nil
-		end
-	end
-	if SpellInterrupt and not rogue_target_has_cc() and not rogue_target_has_stun() and OnCooldown("Kidney Shot") and (OnCooldown("Gouge") or target_incapacitate_immune()) then cast("kick") end
+    -- Interrupt targets cast if no other CC ready.
+    if (SpellInterrupt) then
+        if ((GetTime() - SpellInterrupt) > 2) then
+            SpellInterrupt = nil
+        end
+    end
+    if SpellInterrupt and not rogue_target_has_cc() and not rogue_target_has_stun() and OnCooldown("Kidney Shot") and (OnCooldown("Gouge") or target_incapacitate_immune()) then cast("kick") end
 
-	-- Blind and bandage if Health under 60%.
-	if MyEnergy()>=30 and no_cc_ready() and not rogue_target_has_cc() and not rogue_target_has_stun() and not buffed("Stealth","player") and not OnCooldown("Blind") then
-		if PVP() then cast("Blind") end
-		if MyHealthPct()<.60 then cast("Blind") end
-		-- Make sure not to move here... or you just get a "Recently Bandaged" debuff without getting bandaged.
-		-- if buffed("Blind","target") then use("Heavy Runecloth Bandage") end
-	end
+    -- Blind and bandage if Health under 60%.
+    if MyEnergy()>=30 and no_cc_ready() and not rogue_target_has_cc() and not rogue_target_has_stun() and not buffed("Stealth","player") and not OnCooldown("Blind") then
+        if PVP() then cast("Blind") end
+        if MyHealthPct()<.60 then cast("Blind") end
+        -- Make sure not to move here... or you just get a "Recently Bandaged" debuff without getting bandaged.
+        -- if buffed("Blind","target") then use("Heavy Runecloth Bandage") end
+    end
 
-	-- Vanish if Health under 25%.
-	if (MyHealthPct()<.25 and InCombat() and not OnCooldown("Vanish") and not buffed("Stealth","player")) and (not rogue_target_has_cc() or not rogue_target_has_stun()) then 
-		cast("Vanish")
-		stopattack()
-	end
+    -- Vanish if Health under 25%.
+    if (MyHealthPct()<.25 and InCombat() and not OnCooldown("Vanish") and not buffed("Stealth","player")) and (not rogue_target_has_cc() or not rogue_target_has_stun()) then 
+        cast("Vanish")
+        stopattack()
+    end
 
-	-- Sinister Strike if no ComboPoints and in combat (maybe target switched).
-	if not buffed("Stealth","player") and InCombat() and not rogue_target_has_cc() and not GetComboPoints()==5 then
-		startattack()
-		if MyEnergy()>=85 and GetComboPoints()==0 then cast("Sinister Strike") end
-		if MyEnergy()>=95 then cast("Sinister Strike") end
-	end
+    -- Sinister Strike if no ComboPoints and in combat (maybe target switched).
+    if not buffed("Stealth","player") and InCombat() and not rogue_target_has_cc() and not GetComboPoints()==5 then
+        startattack()
+        if MyEnergy()>=85 and GetComboPoints()==0 then cast("Sinister Strike") end
+        if MyEnergy()>=95 then cast("Sinister Strike") end
+    end
 
-	-- Dont hit target if CC'd or in stealth.
-	if buffed("Stealth","player") or rogue_target_has_cc() and MyEnergy()<100 then return end
+    -- Dont hit target if CC'd or in stealth.
+    if buffed("Stealth","player") or rogue_target_has_cc() and MyEnergy()<100 then return end
 
-	-- Start auto attacking.
-	startattack()
+    -- Start auto attacking.
+    startattack()
 
-	-- Use Gouge.
-	if not rogue_target_has_stun() and not target_incapacitate_immune() then
-		if not OnCooldown("Gouge") and not rogue_target_has_cc() then cast("Gouge") end
-	end
+    -- Use Gouge.
+    if not rogue_target_has_stun() and not target_incapacitate_immune() then
+        if not OnCooldown("Gouge") and not rogue_target_has_cc() then cast("Gouge") end
+    end
 
-	-- Use Kidney Shot if target health higher than possible Eviscerate dmg.
-	if not buffed("Cheap Shot","target") and not OnCooldown("Kidney Shot") then
-		if OnCooldown("Gouge") and GetComboPoints()>=3 then cast("Kidney Shot") end
-		if GetComboPoints()>=3 and OnCooldown("Gouge") and OnCooldown("kick") then cast("Kidney Shot") end
-	end
+    -- Use Kidney Shot if target health higher than possible Eviscerate dmg.
+    if not buffed("Cheap Shot","target") and not OnCooldown("Kidney Shot") then
+        if OnCooldown("Gouge") and GetComboPoints()>=3 then cast("Kidney Shot") end
+        if GetComboPoints()>=3 and OnCooldown("Gouge") and OnCooldown("kick") then cast("Kidney Shot") end
+    end
 
-	-- Use Eviscerate if target health higher than possible Eviscerate dmg.
-	if MyEnergy()>=35 then
-		if GetComboPoints()>=4 and CooldownTime("Kidney Shot")<18 then cast("Eviscerate") end
-		--if GetComboPoints()>=4 and OnCooldown("Kidney Shot")>2 then cast("Eviscerate") end
-	end
+    -- Use Eviscerate if target health higher than possible Eviscerate dmg.
+    if MyEnergy()>=35 then
+        if GetComboPoints()>=4 and CooldownTime("Kidney Shot")<18 then cast("Eviscerate") end
+        --if GetComboPoints()>=4 and OnCooldown("Kidney Shot")>2 then cast("Eviscerate") end
+    end
 
-	if not buffed("Cheap Shot","target") and GetComboPoints()<=5 then
-		if CooldownTime("Gouge")<3 and MyEnergy()>=45 then cast("Sinister Strike") end
-		if CooldownTime("Gouge")>3 and MyEnergy()>=85 then cast("Sinister Strike") end
-	end
-	if not OnCooldown("Gouge") and GetComboPoints()==0 and not OnCooldown("Kidney Shot") then cast("Sinister Strike") end
+    if not buffed("Cheap Shot","target") and GetComboPoints()<=5 then
+        if CooldownTime("Gouge")<3 and MyEnergy()>=45 then cast("Sinister Strike") end
+        if CooldownTime("Gouge")>3 and MyEnergy()>=85 then cast("Sinister Strike") end
+    end
+    if not OnCooldown("Gouge") and GetComboPoints()==0 and not OnCooldown("Kidney Shot") then cast("Sinister Strike") end
 
 end
 
@@ -760,25 +814,25 @@ end
 --------------------------------------------------
 
 function Orogue_SlashCommand(msg)
-	local _, _, command, options = string.find(msg, "([%w%p]+)%s*(.*)$");
-	if (command) then
-		command = string.lower(command);
-	end
-	if (command == "eviscerate") then
-		Orogue_Eviscerate();
-	end
-	if (command == "feral") then
-		Orogue_Combat_Feral();
-	end
-	if (command == "backstab") then
-		Orogue_Backstab();
-	end
-	if (command == "stunlock") then
-		Orogue_Stunlock();
-	end
-	if (command == "vanish") then
-		Orogue_Vanish();
-	end
+    local _, _, command, options = string.find(msg, "([%w%p]+)%s*(.*)$");
+    if (command) then
+        command = string.lower(command);
+    end
+    if (command == "eviscerate") then
+        Orogue_Eviscerate();
+    end
+    if (command == "feral") then
+        Orogue_Combat_Feral();
+    end
+    if (command == "backstab") then
+        Orogue_Backstab();
+    end
+    if (command == "stunlock") then
+        Orogue_Stunlock();
+    end
+    if (command == "vanish") then
+        Orogue_Vanish();
+    end
 end
 
 --------------------------------------------------
@@ -788,170 +842,170 @@ end
 --------------------------------------------------
 
 function Orogue_OnLoad()
-	this:RegisterEvent("PLAYER_REGEN_ENABLED");
-	this:RegisterEvent("PLAYER_REGEN_DISABLED");
-	this:RegisterEvent("PLAYER_ENTER_COMBAT");
-	this:RegisterEvent("PLAYER_LEAVE_COMBAT");
-	this:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES");
-	this:RegisterEvent("CHAT_MSG_SPELL_SELF_DAMAGE");
-	this:RegisterEvent("CHAT_MSG_MONSTER_EMOTE");
-	this:RegisterEvent("VARIABLES_LOADED");
-	this:RegisterEvent("CHARACTER_POINTS_CHANGED");
-	this:RegisterEvent("PLAYER_TARGET_CHANGED")
+    this:RegisterEvent("PLAYER_REGEN_ENABLED");
+    this:RegisterEvent("PLAYER_REGEN_DISABLED");
+    this:RegisterEvent("PLAYER_ENTER_COMBAT");
+    this:RegisterEvent("PLAYER_LEAVE_COMBAT");
+    this:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES");
+    this:RegisterEvent("CHAT_MSG_SPELL_SELF_DAMAGE");
+    this:RegisterEvent("CHAT_MSG_MONSTER_EMOTE");
+    this:RegisterEvent("VARIABLES_LOADED");
+    this:RegisterEvent("CHARACTER_POINTS_CHANGED");
+    this:RegisterEvent("PLAYER_TARGET_CHANGED")
 
-	this:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE");
-	this:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE");
-	this:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF");
-	this:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF");
-	this:RegisterEvent("CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF");
-	this:RegisterEvent("CHAT_MSG_SPELL_AURA_GONE_OTHER");
-	this:RegisterEvent("CHAT_MSG_COMBAT_SELF_HITS");
-	this:RegisterEvent("CHAT_MSG_COMBAT_MISC_INFO");
-	this:RegisterEvent("CHAT_MSG_SPELL_SELF_BUFF");
-	this:RegisterEvent("CHAT_MSG_SPELL_DAMAGESHIELDS_ON_OTHERS");
+    this:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE");
+    this:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE");
+    this:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF");
+    this:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF");
+    this:RegisterEvent("CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF");
+    this:RegisterEvent("CHAT_MSG_SPELL_AURA_GONE_OTHER");
+    this:RegisterEvent("CHAT_MSG_COMBAT_SELF_HITS");
+    this:RegisterEvent("CHAT_MSG_COMBAT_MISC_INFO");
+    this:RegisterEvent("CHAT_MSG_SPELL_SELF_BUFF");
+    this:RegisterEvent("CHAT_MSG_SPELL_DAMAGESHIELDS_ON_OTHERS");
 
-	this:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS");
-	this:RegisterEvent("CHAT_MSG_SPELL_AURA_GONE_SELF");
-	this:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE");
-	this:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE");
+    this:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS");
+    this:RegisterEvent("CHAT_MSG_SPELL_AURA_GONE_SELF");
+    this:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE");
+    this:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE");
 
-	this:RegisterEvent("PLAYER_AURAS_CHANGED");
+    this:RegisterEvent("PLAYER_AURAS_CHANGED");
 
-	this:RegisterEvent("SPELLCAST_START")
-	this:RegisterEvent("UNIT_AURA")
-	this:RegisterEvent("SPELLCAST_INTERRUPTED")
-	this:RegisterEvent("SPELLCAST_FAILED")
-	this:RegisterEvent("SPELLCAST_DELAYED")
-	this:RegisterEvent("SPELLCAST_STOP")
-	this:RegisterEvent("SPELLCAST_CHANNEL_START")
-	this:RegisterEvent("SPELLCAST_CHANNEL_UPDATE")
-	this:RegisterEvent("SPELLCAST_CHANNEL_STOP")
+    this:RegisterEvent("SPELLCAST_START")
+    this:RegisterEvent("UNIT_AURA")
+    this:RegisterEvent("SPELLCAST_INTERRUPTED")
+    this:RegisterEvent("SPELLCAST_FAILED")
+    this:RegisterEvent("SPELLCAST_DELAYED")
+    this:RegisterEvent("SPELLCAST_STOP")
+    this:RegisterEvent("SPELLCAST_CHANNEL_START")
+    this:RegisterEvent("SPELLCAST_CHANNEL_UPDATE")
+    this:RegisterEvent("SPELLCAST_CHANNEL_STOP")
 
-	this:RegisterEvent("UNIT_INVENTORY_CHANGED")
-	this:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-	this:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+    this:RegisterEvent("UNIT_INVENTORY_CHANGED")
+    this:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+    this:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
 
-	this:RegisterEvent("MERCHANT_SHOW")
-	this:RegisterEvent("PLAYER_LOGIN")
-	this:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
-	this:RegisterEvent("START_AUTOREPEAT_SPELL")
-	this:RegisterEvent("STOP_AUTOREPEAT_SPELL")
-	this:RegisterEvent("ITEM_LOCK_CHANGED")
-	this:RegisterEvent("CHAT_MSG_MONSTER_YELL")
+    this:RegisterEvent("MERCHANT_SHOW")
+    this:RegisterEvent("PLAYER_LOGIN")
+    this:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
+    this:RegisterEvent("START_AUTOREPEAT_SPELL")
+    this:RegisterEvent("STOP_AUTOREPEAT_SPELL")
+    this:RegisterEvent("ITEM_LOCK_CHANGED")
+    this:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 
-	FuryLastSpellCast = GetTime();
-	FuryLastStanceCast = GetTime();
-	SlashCmdList["OROGUE"] = Orogue_SlashCommand;
-	SLASH_OROGUE1 = "/orogue";
+    FuryLastSpellCast = GetTime();
+    FuryLastStanceCast = GetTime();
+    SlashCmdList["OROGUE"] = Orogue_SlashCommand;
+    SLASH_OROGUE1 = "/orogue";
 end
 
 function Orogue_OnEvent(event)
-	--if (event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "You attack.(.+) dodges.") or event == "CHAT_MSG_SPELL_SELF_DAMAGE" and string.find(arg1, "Your (.+) was dodged by (.+).")) then
-		--Check to see if enemy dodges
-		--FuryOverpower = GetTime();
-	if (event == "CHAT_MSG_SPELL_SELF_DAMAGE" and (string.find(arg1, "Your Overpower crits (.+) for (%d+).") or string.find(arg1, "Your Overpower hits (.+) for (%d+).") or string.find(arg1, "Your Overpower missed (.+)."))) then
-		--Check to see if Overpower is used
-		FuryOverpower = nil;
-		
-	elseif (event == "CHAT_MSG_COMBAT_SELF_MISSES" or  event == "CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF" or event == "CHAT_MSG_SPELL_SELF_DAMAGE" or event == "CHAT_MSG_COMBAT_SELF_HITS") then
-		if (string.find(arg1, "Your Cheap Shot was (.+) by (.+).") or string.find(arg1, "Your Cheap Shot missed (.+).")) then
-			Cheap_Shot_failed = true;
-		end
-		if (string.find(arg1, "Your Kidney Shot was (.+) by (.+).") or string.find(arg1, "Your Kidney Shot missed (.+).")) then
-			Kidney_Shot_failed = true;
-		end
-		if (string.find(arg1, "Your Gouge was (.+) by (.+).") or string.find(arg1, "Your Gouge missed (.+).")) then
-			Gouge_failed = true;
-		end
-	elseif (event == "CHAT_MSG_COMBAT_SELF_MISSES" and (string.find(arg1, "Your Cheap Shot was (.+) by (.+).") or event == "CHAT_MSG_SPELL_SELF_BUFF" and string.find(arg1, "Your Cheap Shot missed (.+)."))) then
-		Kidney_Shot_failed = true;		
-	elseif (event == "CHAT_MSG_SPELL_SELF_DAMAGE" and (string.find(arg1, "Your Eviscerate crits (.+) for (%d+).") or string.find(arg1, "Your Eviscerate hits (.+) for (%d+).") or string.find(arg1, "Your Eviscerate missed (.+)."))) then
-		--Check to see if Eviscerate is used
-		Rogue_Eviscerate = true;
-	elseif (event == "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF" and (string.find(arg1, "(.+) casts Immune (.+)/(.+)/(.+)."))) then
-		--Check to see if Eviscerate is used
-		Trinket_used = true;
-	elseif (event == "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE" or event == "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF" or event == "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF" or event == "CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE") then
-		--Check to see if enemy casts spell
-		for mob, spell in string.gfind(arg1, "(.+) begins to cast (.+).") do
-			if (mob == UnitName("target") and UnitCanAttack("player", "target") and mob ~= spell) then
-				SpellInterrupt = GetTime();
-			end
-			return;
-		end
-	elseif (event == "CHAT_MSG_SPELL_AURA_GONE_OTHER") then
-		if string.find(arg1, "Blind fades from (.+).") then
-			target_Blindfades = true;
-			target_hasBlind = false;
-		end
-	elseif (event == "CHAT_MSG_SPELL_AURA_GONE_OTHERs") then
-		if string.find(arg1, "(.+) is afflicted by Blind.") or string.find(arg1, "You perform Blind.") then
-		 --or string.find(arg1, "(.+) is afflicted by Blind.")
-			target_hasBlind = true;
-			target_Blindfades = false;
-		end
-	elseif (event == "CHAT_MSG_SPELL_SELF_DAMAGE" and string.find(arg1, "You interrupt (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Kick was (.+) by (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Shield Bash was (.+) by (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Kick missed (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Shield Bash missed (.+).")) then
-		--Check to see if Pummel/Shield Bash is used
-		SpellInterrupt = nil;
-	elseif (event == "CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE") then
-		--Check to see if getting affected by breakable effects
-		if (arg1 == "You are afflicted by Sap." or arg1 == "You are afflicted by Gouge." or arg1 == "You are afflicted by Repentance." or arg1 == "You are afflicted by Reckless Charge.") then
-			FuryIncapacitate = true;
-		elseif (arg1 == "You are afflicted by Fear." or arg1 == "You are afflicted by Intimidating Shout." or arg1 == "You are afflicted by Psychic Scream." or arg1 == "You are afflicted by Panic." or arg1 == "You are afflicted by Bellowing Roar." or arg1 == "You are afflicted by Ancient Despair." or arg1 == "You are afflicted by Terrifying Screech." or arg1 == "You are afflicted by Howl of Terror.") then
-			FuryFear = true;
-		end
-	elseif (event == "CHAT_MSG_SPELL_AURA_GONE_SELF") then
-		--Check to see if breakable effects fades
-		if (arg1 == "Sap fades from you." or arg1 == "Gouge fades from you." or arg1 == "Repentance fades from you." or arg1 == "Reckless Charge fades from you.") then
-			FuryIncapacitate = nil;
-		elseif (arg1 == "Fear fades from you." or arg1 == "Intimidating Shout fades from you." or arg1 == "Psychic Scream fades from you." or arg1 == "Panic fades from you." or arg1 == "Bellowing Roar fades from you." or arg1 == "Ancient Despair fades from you." or arg1 == "Terrifying Screech fades from you." or arg1 == "Howl of Terror fades from you.") then
-			FuryFear = nil;
-		end
-	--elseif (event == "CHAT_MSG_MONSTER_EMOTE") then
-		--Check to see if enemy flees
-		--Fury_RunnerDetect(arg1, arg2);
-	elseif (event == "PLAYER_TARGET_CHANGED" or (event == "CHARACTER_POINTS_CHANGED" and arg1 == -1)) then
-		--Reset Overpower and interrupts, check to see if talents are being calculated
-		if (event == "PLAYER_TARGET_CHANGED") then
-			SpellInterrupt = nil;
-		end
-	elseif event == "SPELLCAST_START" then 
-		-- this event fires when you start casting
-		--Print(arg1)
-		--MB_isCasting=true
-		--me=UnitName("player")
-		--if not string.find(arg1,"eal") and not string.find(arg1,"ight") then return end
-	elseif event == "SPELLCAST_INTERRUPTED" then 
-		-- this event fires when your spells gets interrupted
-		MB_isCasting=false
-		--if MB_debugmsgs and FindInTable(MB_healer_list,UnitName("player")) then RunLine("/raid INTERRUPTED!") end
-	elseif event == "SPELLCAST_FAILED" then 
-		-- this event fires when your spell fails
-		MB_isCasting=false
-	elseif event == "SPELLCAST_DELAYED" then 
-		-- this event fires when your spell gets delayed
-	elseif event == "SPELLCAST_STOP" then 
-		-- this event fires when you stop casting
-		MB_isCasting=false
-	elseif event == "SPELLCAST_CHANNEL_START" then 
-		-- this event fires when you stop casting
-		MB_isChanneling=true
-	elseif event == "SPELLCAST_CHANNEL_STOP" then 
-		-- this event fires when you stop casting
-		MB_isChanneling=false
-	elseif (event == "PLAYER_REGEN_DISABLED") then
-		FuryCombat = true;
-		RegenOn = false
-	elseif (event == "PLAYER_REGEN_ENABLED") then
-		FuryCombat = nil;
-		FuryDanceDone = nil;
-		FuryOldStance = nil;
-		RegenOn = true
-	elseif (event == "PLAYER_ENTER_COMBAT") then
-		CombatLeft = false
-		FuryAttack = true;
-	elseif (event == "PLAYER_LEAVE_COMBAT") then
-		FuryAttack = nil;
-		CombatLeft = true
-	end
+    --if (event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "You attack.(.+) dodges.") or event == "CHAT_MSG_SPELL_SELF_DAMAGE" and string.find(arg1, "Your (.+) was dodged by (.+).")) then
+        --Check to see if enemy dodges
+        --FuryOverpower = GetTime();
+    if (event == "CHAT_MSG_SPELL_SELF_DAMAGE" and (string.find(arg1, "Your Overpower crits (.+) for (%d+).") or string.find(arg1, "Your Overpower hits (.+) for (%d+).") or string.find(arg1, "Your Overpower missed (.+)."))) then
+        --Check to see if Overpower is used
+        FuryOverpower = nil;
+        
+    elseif (event == "CHAT_MSG_COMBAT_SELF_MISSES" or  event == "CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF" or event == "CHAT_MSG_SPELL_SELF_DAMAGE" or event == "CHAT_MSG_COMBAT_SELF_HITS") then
+        if (string.find(arg1, "Your Cheap Shot was (.+) by (.+).") or string.find(arg1, "Your Cheap Shot missed (.+).")) then
+            Cheap_Shot_failed = true;
+        end
+        if (string.find(arg1, "Your Kidney Shot was (.+) by (.+).") or string.find(arg1, "Your Kidney Shot missed (.+).")) then
+            Kidney_Shot_failed = true;
+        end
+        if (string.find(arg1, "Your Gouge was (.+) by (.+).") or string.find(arg1, "Your Gouge missed (.+).")) then
+            Gouge_failed = true;
+        end
+    elseif (event == "CHAT_MSG_COMBAT_SELF_MISSES" and (string.find(arg1, "Your Cheap Shot was (.+) by (.+).") or event == "CHAT_MSG_SPELL_SELF_BUFF" and string.find(arg1, "Your Cheap Shot missed (.+)."))) then
+        Kidney_Shot_failed = true;
+    elseif (event == "CHAT_MSG_SPELL_SELF_DAMAGE" and (string.find(arg1, "Your Eviscerate crits (.+) for (%d+).") or string.find(arg1, "Your Eviscerate hits (.+) for (%d+).") or string.find(arg1, "Your Eviscerate missed (.+)."))) then
+        --Check to see if Eviscerate is used
+        Rogue_Eviscerate = true;
+    elseif (event == "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF" and (string.find(arg1, "(.+) casts Immune (.+)/(.+)/(.+)."))) then
+        --Check to see if Eviscerate is used
+        Trinket_used = true;
+    elseif (event == "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE" or event == "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF" or event == "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF" or event == "CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE") then
+        --Check to see if enemy casts spell
+        for mob, spell in string.gfind(arg1, "(.+) begins to cast (.+).") do
+            if (mob == UnitName("target") and UnitCanAttack("player", "target") and mob ~= spell) then
+                SpellInterrupt = GetTime();
+            end
+            return;
+        end
+    elseif (event == "CHAT_MSG_SPELL_AURA_GONE_OTHER") then
+        if string.find(arg1, "Blind fades from (.+).") then
+            target_Blindfades = true;
+            target_hasBlind = false;
+        end
+    elseif (event == "CHAT_MSG_SPELL_AURA_GONE_OTHERs") then
+        if string.find(arg1, "(.+) is afflicted by Blind.") or string.find(arg1, "You perform Blind.") then
+         --or string.find(arg1, "(.+) is afflicted by Blind.")
+            target_hasBlind = true;
+            target_Blindfades = false;
+        end
+    elseif (event == "CHAT_MSG_SPELL_SELF_DAMAGE" and string.find(arg1, "You interrupt (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Kick was (.+) by (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Shield Bash was (.+) by (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Kick missed (.+).") or event == "CHAT_MSG_COMBAT_SELF_MISSES" and string.find(arg1, "Your Shield Bash missed (.+).")) then
+        --Check to see if Pummel/Shield Bash is used
+        SpellInterrupt = nil;
+    elseif (event == "CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE") then
+        --Check to see if getting affected by breakable effects
+        if (arg1 == "You are afflicted by Sap." or arg1 == "You are afflicted by Gouge." or arg1 == "You are afflicted by Repentance." or arg1 == "You are afflicted by Reckless Charge.") then
+            FuryIncapacitate = true;
+        elseif (arg1 == "You are afflicted by Fear." or arg1 == "You are afflicted by Intimidating Shout." or arg1 == "You are afflicted by Psychic Scream." or arg1 == "You are afflicted by Panic." or arg1 == "You are afflicted by Bellowing Roar." or arg1 == "You are afflicted by Ancient Despair." or arg1 == "You are afflicted by Terrifying Screech." or arg1 == "You are afflicted by Howl of Terror.") then
+            FuryFear = true;
+        end
+    elseif (event == "CHAT_MSG_SPELL_AURA_GONE_SELF") then
+        --Check to see if breakable effects fades
+        if (arg1 == "Sap fades from you." or arg1 == "Gouge fades from you." or arg1 == "Repentance fades from you." or arg1 == "Reckless Charge fades from you.") then
+            FuryIncapacitate = nil;
+        elseif (arg1 == "Fear fades from you." or arg1 == "Intimidating Shout fades from you." or arg1 == "Psychic Scream fades from you." or arg1 == "Panic fades from you." or arg1 == "Bellowing Roar fades from you." or arg1 == "Ancient Despair fades from you." or arg1 == "Terrifying Screech fades from you." or arg1 == "Howl of Terror fades from you.") then
+            FuryFear = nil;
+        end
+    --elseif (event == "CHAT_MSG_MONSTER_EMOTE") then
+        --Check to see if enemy flees
+        --Fury_RunnerDetect(arg1, arg2);
+    elseif (event == "PLAYER_TARGET_CHANGED" or (event == "CHARACTER_POINTS_CHANGED" and arg1 == -1)) then
+        --Reset Overpower and interrupts, check to see if talents are being calculated
+        if (event == "PLAYER_TARGET_CHANGED") then
+            SpellInterrupt = nil;
+        end
+    elseif event == "SPELLCAST_START" then 
+        -- this event fires when you start casting
+        --Print(arg1)
+        --MB_isCasting=true
+        --me=UnitName("player")
+        --if not string.find(arg1,"eal") and not string.find(arg1,"ight") then return end
+    elseif event == "SPELLCAST_INTERRUPTED" then 
+        -- this event fires when your spells gets interrupted
+        MB_isCasting=false
+        --if MB_debugmsgs and FindInTable(MB_healer_list,UnitName("player")) then RunLine("/raid INTERRUPTED!") end
+    elseif event == "SPELLCAST_FAILED" then 
+        -- this event fires when your spell fails
+        MB_isCasting=false
+    elseif event == "SPELLCAST_DELAYED" then 
+        -- this event fires when your spell gets delayed
+    elseif event == "SPELLCAST_STOP" then 
+        -- this event fires when you stop casting
+        MB_isCasting=false
+    elseif event == "SPELLCAST_CHANNEL_START" then 
+        -- this event fires when you stop casting
+        MB_isChanneling=true
+    elseif event == "SPELLCAST_CHANNEL_STOP" then 
+        -- this event fires when you stop casting
+        MB_isChanneling=false
+    elseif (event == "PLAYER_REGEN_DISABLED") then
+        FuryCombat = true;
+        RegenOn = false
+    elseif (event == "PLAYER_REGEN_ENABLED") then
+        FuryCombat = nil;
+        FuryDanceDone = nil;
+        FuryOldStance = nil;
+        RegenOn = true
+    elseif (event == "PLAYER_ENTER_COMBAT") then
+        CombatLeft = false
+        FuryAttack = true;
+    elseif (event == "PLAYER_LEAVE_COMBAT") then
+        FuryAttack = nil;
+        CombatLeft = true
+    end
 end
