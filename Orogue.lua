@@ -2,7 +2,7 @@
 MB_isCasting=false
 MB_isChanneling=false
 
-DRUIDMANA = 0;
+UFIDRUIDMANA = 0;
 DRUIDMAXMANA = 0;
 
 HASTECHARGES = 0;
@@ -267,7 +267,7 @@ function PVP()
 end
 
 function InCombat()
- return UnitAffectingCombat("player") or PVP()
+    return UnitAffectingCombat("player")
 end
 
 function TargetInCombat()
@@ -363,6 +363,17 @@ function GetArmor()
     return effectiveArmor
 end
 
+function InCatForm()
+    local powerType, powerTypeString = UnitPowerType("player");
+
+    if powerType == 3 then
+        return true
+    else
+        return false
+    end
+end
+
+
 function Orogue_Vanish()
     if InCombat() then
         if not buffed("Stealth","player") then cast("Vanish") end
@@ -394,7 +405,8 @@ function Orogue_Combat_Feral()
 
     -- Go Prowl if not in combat.
         if not buffed("Omen of Clarity","player") and UFIDRUIDMANA > 598 then
-            if buffed("Cat Form","player") then cast("Cat Form") end
+            if InCatForm() then cast("Cat Form") end
+            --if buffed("Cat Form","player") then cast("Cat Form") end
             cast("Omen of Clarity")
             return
         end
@@ -405,20 +417,21 @@ function Orogue_Combat_Feral()
         end
 
     -- If Mana points are not known unshift and save current Mana points.
-    if UFIDRUIDMANA == 0 and buffed("Cat Form","player") then cast("Cat Form") end
+    --if UFIDRUIDMANA == 0 and buffed("Cat Form","player") then cast("Cat Form") end
 
     -- Store Mana Points cause in Cat we can not know how much Mana we have.
-    if not buffed("Cat Form","player") then
+    if not InCatForm() then
+        --UFIDRUIDMANA = UnitMana("player")
         if InCombat() then
             if (UnitManaMax("player") - UnitMana("player"))>2000 and ItemCooldown("Dark Rune") > 10 and ItemCooldown("Major Mana Potion") > 10 and not OnCooldown("Innervate") then
                 cast("Innervate")
                 return
             else
-                if (UnitManaMax("player") - UnitMana("player"))>1500 and ItemCooldown("Dark Rune") == 0 then
+                if (UnitManaMax("player") - UnitMana("player"))>500 and ItemCooldown("Dark Rune") == 0 then
                     use("Dark Rune")
                     return
                 end
-                if (UnitManaMax("player") - UnitMana("player"))>2250 and ItemCooldown("Major Mana Potion") == 0 then
+                if (UnitManaMax("player") - UnitMana("player"))>750 and ItemCooldown("Major Mana Potion") == 0 then
                     use("Major Mana Potion")
                     return
                 end
@@ -431,7 +444,8 @@ function Orogue_Combat_Feral()
     end
 
     -- Alway go back to Cat.
-    SelfBuff("Cat Form")
+    --SelfBuff("Cat Form")
+    if not InCatForm() then cast("Cat Form") end
 
     -- Do nothing if not in combat.
     if not InCombat() then return end
@@ -439,46 +453,40 @@ function Orogue_Combat_Feral()
         startattack()
 
     -- Powershift.
-    if MyEnergy()<28 and buffed("Cat Form","player") and SHAPESHIFT_GO then
-        if UFIDRUIDMANA < 478 and ItemCooldown("Major Mana Potion") == 0 or ItemCooldown("Dark Rune") == 0 then
+	if not buffed("Metamorphosis Rune","player") then
+		if MyEnergy()<48 and InCatForm() and SHAPESHIFT_GO then
+		    if UFIDRUIDMANA > 600 then
+		        cast("Cat Form")
+		    end
+		end
+    else
+        if MyEnergy()<60 and InCatForm() and SHAPESHIFT_GO then
             cast("Cat Form")
         end
-    end
-    if not buffed("Haste","player") and MyEnergy()<12 and buffed("Cat Form","player") and SHAPESHIFT_GO then
-        if UFIDRUIDMANA > 478 then
-            cast("Cat Form")
-        end
-    end
-    if buffed("Haste","player") and MyEnergy()<20 and buffed("Cat Form","player") and SHAPESHIFT_GO then
-        if UFIDRUIDMANA > 478 then
-            cast("Cat Form")
-        end
-    end
-    if (buffed("Slayer's Crest","player") or buffed("Kiss of the Spider","player")) and buffed("Haste","player") and MyEnergy()<28 and buffed("Cat Form","player") and SHAPESHIFT_GO then
-        if UFIDRUIDMANA > 478 then
-            cast("Cat Form")
-        end
-    end
+	end
 
     -- DPS.
-    if buffed("Cat Form","player") then
+    if InCatForm() then
         if not buffed("Haste","player") then
             --use("Might of the Shapeshifter")
-            if ItemCooldown("Manual Crowd Pummeler") > 0 then
-                HASTECHARGES = 0
-            end
-            if not ManualCrowdPummelerEquipped then
-                use("Manual Crowd Pummeler")
-            end
-            if ManualCrowdPummelerEquipped and (HASTECHARGES == 3 and ItemCooldown("Manual Crowd Pummeler") == 0) then
-                PickupInventoryItem(16) DeleteCursorItem()
-            end
+            --if ItemCooldown("Manual Crowd Pummeler") > 0 then
+                --HASTECHARGES = 0
+            --end
+            --if not ManualCrowdPummelerEquipped then
+                --use("Manual Crowd Pummeler")
+            --end
+            --if ManualCrowdPummelerEquipped and (HASTECHARGES == 3 and ItemCooldown("Manual Crowd Pummeler") == 0) then
+                --PickupInventoryItem(16) DeleteCursorItem()
+--end
             if ManualCrowdPummelerEquipped and ItemCooldown("Manual Crowd Pummeler") == 0 then
                 use("Manual Crowd Pummeler")
                 HASTECHARGES = HASTECHARGES + 1
             end
         end
 
+        if not buffed("Metamorphosis Rune","player") then
+            use("Rune of Metamorphosis")
+        end
         if not buffed("Slayer's Crest","player") then
             use("Slayer's Crest")
         end
@@ -487,6 +495,9 @@ function Orogue_Combat_Feral()
         end
         --if not buffed("Haste","player") and ItemOnCooldownTime("Badge of the Swarmguard") > 40 and ManualCrowdPummelerEquipped() then use("The End of Dreams") end
         --if not buffed("Haste","player") and ItemOnCooldownTime("Badge of the Swarmguard") > 40 and ManualCrowdPummelerEquipped() then use("Tome of Knowledge") end
+		--if not buffed("Tiger's Fury","player") and GetComboPoints()<4 and MyEnergy()>60 then
+        --    cast("Tiger's Fury")
+        --end
         if GetComboPoints()>=4 then
             cast("Ferocious Bite")
         end
